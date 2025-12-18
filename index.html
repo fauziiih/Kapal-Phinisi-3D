@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Visualisasi Kapal Phinisi 3D</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
+    <link type="text/css" rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div id="container"></div>
+    <div id="info">
+      <p>Kapal Phinisi</p>
+    </div>
+    <button
+      id="audioButton"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 12px 16px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      "
+      onmouseover="this.style.background='rgba(0, 0, 0, 0.9)'"
+      onmouseout="this.style.background='rgba(0, 0, 0, 0.7)'"
+    >
+      🔇
+    </button>
+
+    <button
+      id="controlButton"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 90px;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 12px 16px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      "
+      onmouseover="this.style.background='rgba(0, 0, 0, 0.9)'"
+      onmouseout="this.style.background='rgba(0, 0, 0, 0.7)'"
+    >
+      🎮
+    </button>
+
+    <!-- Popup Modal -->
+
+    <div
+      id="shipPartModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        style="
+          background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+          border-radius: 20px;
+          padding: 30px;
+          max-width: 500px;
+          width: 90%;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+          position: relative;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+        "
+      >
+        <button
+          id="closeModal"
+          style="
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          "
+          onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'"
+          onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'"
+        >
+          ×
+        </button>
+        <h2
+          id="modalTitle"
+          style="
+            color: white;
+            margin: 0 0 20px 0;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+          "
+        >
+          Judul
+        </h2>
+        <p
+          id="modalDescription"
+          style="
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.6;
+            font-size: 16px;
+            margin: 0;
+          "
+        >
+          Deskripsi
+        </p>
+      </div>
+    </div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./build/three.module.js",
+          "three/addons/": "./examples/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+
+      import Stats from "three/addons/libs/stats.module.js";
+
+      import { GUI } from "three/addons/libs/lil-gui.module.min.js";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { Water } from "three/addons/objects/Water.js";
+      import { Sky } from "three/addons/objects/Sky.js";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+      let container, stats;
+      let camera, scene, renderer;
+      let controls, water, sun, mesh;
+      let listener, sound;
+
+      // Keyboard state for ship controls
+      const keys = {
+        w: false,
+        a: false,
+        s: false,
+        d: false,
+      };
+
+      // Control state
+      let controlsEnabled = false;
+
+      // Ship movement parameters
+      let shipSpeed = 0;
+      let shipRotation = 0;
+      let rotationVelocity = 0; // Smooth rotation velocity
+      const maxSpeed = 0.3;
+      const acceleration = 0.01;
+      const deceleration = 0.005;
+      const maxRotationSpeed = 0.02;
+      const rotationAcceleration = 0.001;
+      const rotationDeceleration = 0.0005;
+
+      init();
+
+      function init() {
+        container = document.getElementById("container");
+
+        //
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setAnimationLoop(animate);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.5;
+        container.appendChild(renderer.domElement);
+
+        //
+
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera(
+          55,
+          window.innerWidth / window.innerHeight,
+          1,
+          20000
+        );
+        camera.position.set(30, 30, 100);
+
+        // Audio
+
+        listener = new THREE.AudioListener();
+        camera.add(listener);
+
+        sound = new THREE.Audio(listener);
+
+        const audioLoader = new THREE.AudioLoader();
+        const audioButton = document.getElementById("audioButton");
+
+        audioLoader.load(
+          "examples/sounds/videoplayback.m4a",
+          function (buffer) {
+            sound.setBuffer(buffer);
+            sound.setLoop(true);
+            sound.setVolume(5);
+
+            // Audio button click handler
+            audioButton.addEventListener("click", function () {
+              if (sound.isPlaying) {
+                sound.pause();
+                audioButton.textContent = "🔇";
+                audioButton.style.opacity = "0.6";
+              } else {
+                sound.play();
+                audioButton.textContent = "🔊";
+                audioButton.style.opacity = "1";
+              }
+            });
+
+            // Try to auto-play with fallback for browser restrictions
+            const playAudio = () => {
+              const playPromise = sound.play();
+              if (playPromise !== undefined) {
+                playPromise
+                  .then(() => {
+                    // Autoplay started successfully
+                    audioButton.textContent = "🔊";
+                    audioButton.style.opacity = "1";
+                  })
+                  .catch((error) => {
+                    // Autoplay was prevented - wait for user interaction
+                    console.log(
+                      "Autoplay prevented, waiting for user interaction"
+                    );
+                    audioButton.textContent = "🔇";
+                    audioButton.style.opacity = "0.6";
+
+                    // Add one-time listeners to start audio on first interaction
+                    const startAudio = () => {
+                      sound.play();
+                      audioButton.textContent = "🔊";
+                      audioButton.style.opacity = "1";
+                      // Remove listeners after first play
+                      document.removeEventListener("click", startAudio);
+                      document.removeEventListener("keydown", startAudio);
+                    };
+                    document.addEventListener("click", startAudio, {
+                      once: true,
+                    });
+                    document.addEventListener("keydown", startAudio, {
+                      once: true,
+                    });
+                  });
+              }
+            };
+
+            playAudio();
+          }
+        );
+
+        //
+
+        // Control button click handler
+        const controlButton = document.getElementById("controlButton");
+        controlButton.addEventListener("click", function () {
+          controlsEnabled = !controlsEnabled;
+          if (controlsEnabled) {
+            controlButton.textContent = "🎮";
+            controlButton.style.opacity = "1";
+            controlButton.style.borderColor = "rgba(0, 255, 0, 0.5)";
+            // Disable OrbitControls when ship controls are active
+            controls.enabled = false;
+          } else {
+            controlButton.textContent = "🎮";
+            controlButton.style.opacity = "0.6";
+            controlButton.style.borderColor = "rgba(255, 255, 255, 0.3)";
+            // Reset ship speed when disabling controls
+            shipSpeed = 0;
+            // Enable OrbitControls when ship controls are inactive
+            controls.enabled = true;
+          }
+        });
+
+        sun = new THREE.Vector3();
+
+        // Water
+
+        const waterGeometry = new THREE.PlaneGeometry(10000, 10000);
+
+        water = new Water(waterGeometry, {
+          textureWidth: 512,
+          textureHeight: 512,
+          waterNormals: new THREE.TextureLoader().load(
+            "examples/textures/waternormals.jpg",
+            function (texture) {
+              texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            }
+          ),
+          sunDirection: new THREE.Vector3(),
+          sunColor: 0xffffff,
+          waterColor: 0x001e0f,
+          distortionScale: 3.7,
+          fog: scene.fog !== undefined,
+        });
+
+        water.rotation.x = -Math.PI / 2;
+
+        scene.add(water);
+
+        // Skybox
+
+        const sky = new Sky();
+        sky.scale.setScalar(10000);
+        scene.add(sky);
+
+        const skyUniforms = sky.material.uniforms;
+
+        skyUniforms["turbidity"].value = 10;
+        skyUniforms["rayleigh"].value = 2;
+        skyUniforms["mieCoefficient"].value = 0.005;
+        skyUniforms["mieDirectionalG"].value = 0.8;
+
+        // Add stars for night sky
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsMaterial = new THREE.PointsMaterial({
+          color: 0xffffff,
+          size: 2,
+          sizeAttenuation: false,
+        });
+
+        const starsVertices = [];
+        for (let i = 0; i < 10000; i++) {
+          const x = THREE.MathUtils.randFloatSpread(20000);
+          const y = THREE.MathUtils.randFloatSpread(20000);
+          const z = THREE.MathUtils.randFloatSpread(20000);
+          starsVertices.push(x, y, z);
+        }
+
+        starsGeometry.setAttribute(
+          "position",
+          new THREE.Float32BufferAttribute(starsVertices, 3)
+        );
+
+        const stars = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(stars);
+        // Initially hide stars (visible only at night)
+        stars.visible = false;
+        window.stars = stars; // Store reference for later use
+
+        const parameters = {
+          elevation: 2,
+          azimuth: 180,
+        };
+
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        const sceneEnv = new THREE.Scene();
+
+        let renderTarget;
+
+        function updateSun() {
+          const phi = THREE.MathUtils.degToRad(90 - parameters.elevation);
+          const theta = THREE.MathUtils.degToRad(parameters.azimuth);
+
+          sun.setFromSphericalCoords(1, phi, theta);
+
+          sky.material.uniforms["sunPosition"].value.copy(sun);
+          water.material.uniforms["sunDirection"].value.copy(sun).normalize();
+
+          // Adjust exposure based on elevation for day/night cycle
+          // elevation > 0 = day (brighter)
+          // elevation < 0 = night (darker)
+          if (parameters.elevation > 0) {
+            renderer.toneMappingExposure =
+              0.5 + (parameters.elevation / 90) * 0.3;
+          } else {
+            // Night time - very low exposure
+            renderer.toneMappingExposure =
+              0.02 + Math.max(0, (parameters.elevation + 10) / 10) * 0.1;
+          }
+
+          if (renderTarget !== undefined) renderTarget.dispose();
+
+          sceneEnv.add(sky);
+          renderTarget = pmremGenerator.fromScene(sceneEnv);
+          scene.add(sky);
+
+          scene.environment = renderTarget.texture;
+
+          // Show/hide stars based on time of day
+          if (window.stars) {
+            if (parameters.elevation < 5) {
+              // Show stars when sun is low or below horizon
+              window.stars.visible = true;
+              // Fade in stars smoothly
+              const opacity = Math.max(
+                0,
+                Math.min(1, (5 - parameters.elevation) / 15)
+              );
+              window.stars.material.opacity = opacity;
+              window.stars.material.transparent = true;
+            } else {
+              window.stars.visible = false;
+            }
+          }
+        }
+
+        updateSun();
+
+        //kapal-phinisi
+        const loader = new GLTFLoader();
+        loader.load(
+          "examples/models/gltf/phinisi.glb",
+          function (gltf) {
+            mesh = gltf.scene;
+            mesh.scale.set(6, 6, 6);
+            scene.add(mesh);
+
+            // ========================================
+            // PENGATURAN ARAH KAPAL (UBAH DI SINI!)
+            // ========================================
+            // Ubah nilai di bawah untuk memutar kapal:
+            // 0 = arah default (menghadap +Z)
+            // Math.PI / 2 = putar 90° ke kanan
+            // Math.PI = putar 180° (balik arah)
+            // -Math.PI / 2 = putar 90° ke kiri
+            // Math.PI * 1.5 = putar 270°
+
+            mesh.rotation.y = 0; // ← UBAH NILAI INI UNTUK MENGATUR ARAH KAPAL
+
+            // ========================================
+
+            // Create interactive markers for ship parts
+            const markerGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+
+            // Marker 1: Layar (Sail) - positioned high
+            const layarMaterial = new THREE.MeshBasicMaterial({
+              color: 0x00ff00,
+              transparent: true,
+              opacity: 0.8,
+            });
+            const layarMarker = new THREE.Mesh(markerGeometry, layarMaterial);
+            layarMarker.position.set(0, 7, 0); // At sail/mast area (center top)
+            layarMarker.userData = {
+              type: "layar",
+              title: "Layar Kapal Phinisi",
+              description:
+                "Layar perahu Phinisi adalah layar tradisional khas Sulawesi Selatan yang berfungsi sebagai penggerak utama kapal. Phinisi memiliki dua tiang utama dengan tujuh layar yang tersusun khas, melambangkan keseimbangan dan filosofi kehidupan pelaut Bugis–Makassar. Layar ini biasanya terbuat dari kain tebal dan dirancang untuk memanfaatkan arah angin secara optimal saat berlayar di laut lepas.",
+            };
+            mesh.add(layarMarker);
+
+            // Marker 2: Body Kapal - positioned middle
+            const bodyMaterial = new THREE.MeshBasicMaterial({
+              color: 0x0088ff,
+              transparent: true,
+              opacity: 0.8,
+            });
+            const bodyMarker = new THREE.Mesh(markerGeometry, bodyMaterial);
+            bodyMarker.position.set(1.5, 1, 0); // At ship body (middle side)
+            bodyMarker.userData = {
+              type: "body",
+              title: "Body Kapal Phinisi",
+              description:
+                "Body kapal Phinisi adalah bagian badan kapal yang memanjang dan kokoh, berfungsi menopang seluruh struktur serta menjaga kestabilan kapal saat berlayar. Terbuat dari kayu bitti berwarna putih/krem",
+            };
+            mesh.add(bodyMarker);
+
+            // Marker 3: Bulukumba (Stern) - positioned at back
+            const sternMaterial = new THREE.MeshBasicMaterial({
+              color: 0xff8800,
+              transparent: true,
+              opacity: 0.8,
+            });
+            const sternMarker = new THREE.Mesh(markerGeometry, sternMaterial);
+            sternMarker.position.set(6, 1.5, 0.5); // At stern/back of ship
+            sternMarker.userData = {
+              type: "bulukumba",
+              title: "Bulukumba - Kampung Halaman Phinisi",
+              description:
+                "Bulukumba adalah pusat pembuatan kapal Phinisi yang paling terkenal. Banyak kapal Phinisi besar dan tradisional dibuat di sini menggunakan teknik kuno, tradisi ritual, serta keterampilan turun-temurun masyarakat setempat.",
+            };
+            mesh.add(sternMarker);
+
+            // Store markers for animation
+            window.shipMarkers = [layarMarker, bodyMarker, sternMarker];
+          }
+        );
+
+        //
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.maxPolarAngle = Math.PI * 0.495;
+        controls.target.set(0, 15, 0);
+        controls.minDistance = 40.0;
+        controls.maxDistance = 200.0;
+        // make right mouse button rotate, middle dolly, left will be used for clicks/pan
+        controls.mouseButtons = {
+          LEFT: THREE.MOUSE.PAN,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.ROTATE,
+        };
+        controls.update();
+
+        // Raycaster + pointer handlers for left-click and right-click behaviour
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+        let pointerDownState = false; // false | true (pressed) | 'dragging'
+        let rightClickDown = false;
+        let rightClickStartX = 0;
+        const dragThreshold = 5; // pixels
+
+        renderer.domElement.addEventListener("pointerdown", (event) => {
+          // Left click
+          if (event.button === 0) {
+            pointerDownState = true;
+            pointer._downX = event.clientX;
+            pointer._downY = event.clientY;
+          }
+          // Right click - start rotation
+          if (event.button === 2) {
+            rightClickDown = true;
+            rightClickStartX = event.clientX;
+          }
+        });
+
+        renderer.domElement.addEventListener("pointermove", (event) => {
+          if (pointerDownState === true) {
+            const dx = event.clientX - pointer._downX;
+            const dy = event.clientY - pointer._downY;
+            if (Math.sqrt(dx * dx + dy * dy) > dragThreshold)
+              pointerDownState = "dragging";
+          }
+
+          // Right-click drag to rotate ship
+          if (rightClickDown && mesh) {
+            const deltaX = event.clientX - rightClickStartX;
+            mesh.rotation.y += deltaX * 0.005; // Rotate based on horizontal drag
+            rightClickStartX = event.clientX;
+          }
+        });
+
+        renderer.domElement.addEventListener("pointerup", (event) => {
+          if (event.button === 0) {
+            if (pointerDownState === true) {
+              // treat as click (no drag)
+              pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+              pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+              raycaster.setFromCamera(pointer, camera);
+              const intersects = raycaster.intersectObjects(
+                scene.children,
+                true
+              );
+              if (intersects.length > 0) {
+                // Find the first intersected object that has userData
+                for (let i = 0; i < intersects.length; i++) {
+                  let picked = intersects[i].object;
+
+                  // Check if this object has ship part information
+                  if (picked.userData && picked.userData.type) {
+                    // Show popup
+                    document.getElementById("modalTitle").textContent =
+                      picked.userData.title;
+                    document.getElementById("modalDescription").textContent =
+                      picked.userData.description;
+                    document.getElementById("shipPartModal").style.display =
+                      "flex";
+
+                    // Visual feedback - pulse the marker
+                    const prevScale = picked.scale.clone();
+                    picked.scale.multiplyScalar(1.3);
+                    setTimeout(() => {
+                      picked.scale.copy(prevScale);
+                    }, 200);
+
+                    break; // Stop after first valid marker
+                  }
+                }
+              }
+            }
+            pointerDownState = false;
+          }
+          // Right click release
+          if (event.button === 2) {
+            rightClickDown = false;
+          }
+        });
+
+        // Prevent context menu on right-click
+        renderer.domElement.addEventListener("contextmenu", (event) => {
+          event.preventDefault();
+        });
+
+        // Close modal handlers
+        document.getElementById("closeModal").addEventListener("click", () => {
+          document.getElementById("shipPartModal").style.display = "none";
+        });
+
+        document
+          .getElementById("shipPartModal")
+          .addEventListener("click", (e) => {
+            if (e.target.id === "shipPartModal") {
+              document.getElementById("shipPartModal").style.display = "none";
+            }
+          });
+
+        // Keyboard controls for ship movement
+        window.addEventListener("keydown", (e) => {
+          if (!controlsEnabled) return;
+          const key = e.key.toLowerCase();
+          if (keys.hasOwnProperty(key)) {
+            keys[key] = true;
+          }
+        });
+
+        window.addEventListener("keyup", (e) => {
+          if (!controlsEnabled) return;
+          const key = e.key.toLowerCase();
+          if (keys.hasOwnProperty(key)) {
+            keys[key] = false;
+          }
+        });
+
+        //
+
+        stats = new Stats();
+        container.appendChild(stats.dom);
+
+        // GUI
+
+        const gui = new GUI();
+
+        const folderSky = gui.addFolder("Sky");
+        folderSky
+          .add(parameters, "elevation", -10, 90, 0.1)
+          .onChange(updateSun);
+        folderSky
+          .add(parameters, "azimuth", -180, 180, 0.1)
+          .onChange(updateSun);
+        folderSky.open();
+
+        const waterUniforms = water.material.uniforms;
+
+        const folderWater = gui.addFolder("Water");
+        folderWater
+          .add(waterUniforms.distortionScale, "value", 0, 8, 0.1)
+          .name("distortionScale");
+        folderWater.add(waterUniforms.size, "value", 0.1, 10, 0.1).name("size");
+        folderWater.open();
+
+        //
+
+        window.addEventListener("resize", onWindowResize);
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      function animate() {
+        render();
+        stats.update();
+      }
+
+      function render() {
+        const time = performance.now() * 0.001;
+
+        if (mesh) {
+          // Ship floats on water surface at y = 0.5
+          const baseY = 0.5;
+
+          // Only process ship controls if controlsEnabled is true
+          if (controlsEnabled) {
+            // Handle ship rotation (A/D keys) with smooth acceleration
+            if (keys.a) {
+              rotationVelocity = Math.min(
+                rotationVelocity + rotationAcceleration,
+                maxRotationSpeed
+              );
+            } else if (keys.d) {
+              rotationVelocity = Math.max(
+                rotationVelocity - rotationAcceleration,
+                -maxRotationSpeed
+              );
+            } else {
+              // Decelerate rotation when no rotation key is pressed
+              if (rotationVelocity > 0) {
+                rotationVelocity = Math.max(
+                  0,
+                  rotationVelocity - rotationDeceleration
+                );
+              } else if (rotationVelocity < 0) {
+                rotationVelocity = Math.min(
+                  0,
+                  rotationVelocity + rotationDeceleration
+                );
+              }
+            }
+
+            // Handle ship speed (W/S keys)
+            if (keys.w) {
+              shipSpeed = Math.min(shipSpeed + acceleration, maxSpeed);
+            } else if (keys.s) {
+              shipSpeed = Math.max(shipSpeed - acceleration, -maxSpeed * 0.5);
+            } else {
+              // Decelerate when no key is pressed
+              if (shipSpeed > 0) {
+                shipSpeed = Math.max(0, shipSpeed - deceleration);
+              } else if (shipSpeed < 0) {
+                shipSpeed = Math.min(0, shipSpeed + deceleration);
+              }
+            }
+          }
+
+          // Apply rotation velocity to ship rotation
+          shipRotation += rotationVelocity;
+          // Apply rotation to ship
+          mesh.rotation.y = shipRotation;
+
+          // Move ship to the right (perpendicular to ship's facing direction)
+          // W moves right, S moves left
+          const rightAngle = shipRotation - Math.PI / 2;
+          mesh.position.x += Math.sin(rightAngle) * shipSpeed;
+          mesh.position.z += Math.cos(rightAngle) * shipSpeed;
+          mesh.position.y = baseY;
+
+          // Update camera to follow ship (only when controls are enabled)
+          if (controlsEnabled) {
+            const cameraDistance = 100;
+            const cameraHeight = 40;
+            // Position camera on the right side of the ship (90 degrees to the right)
+            const rightAngle = shipRotation - Math.PI / 2;
+            const cameraOffset = new THREE.Vector3(
+              mesh.position.x - Math.sin(rightAngle) * cameraDistance,
+              mesh.position.y + cameraHeight,
+              mesh.position.z - Math.cos(rightAngle) * cameraDistance
+            );
+
+            camera.position.lerp(cameraOffset, 0.05);
+            camera.lookAt(mesh.position);
+            controls.target.copy(mesh.position);
+          }
+        }
+
+        // Animate markers with pulsing effect
+        if (window.shipMarkers) {
+          window.shipMarkers.forEach((marker, index) => {
+            const pulse = 1 + Math.sin(time * 2 + index * 0.5) * 0.15;
+            marker.scale.set(pulse, pulse, pulse);
+          });
+        }
+
+        water.material.uniforms["time"].value += 1.0 / 60.0;
+
+        renderer.render(scene, camera);
+      }
+    </script>
+  </body>
+</html>

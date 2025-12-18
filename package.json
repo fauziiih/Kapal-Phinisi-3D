@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "dev": "npx http-server -c-1 -p 8080"
+  },
+  "dependencies": {
+    "three": "^0.182.0"
+  }
+}
