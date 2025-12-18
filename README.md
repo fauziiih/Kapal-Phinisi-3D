@@ -178,19 +178,23 @@ Aplikasi memiliki **mode simulasi mini** untuk menggerakkan kapal:
 - Marker 3D ber-**pulse** secara terus menerus untuk menarik perhatian
 - Air terus beranimasi dengan gelombang yang mengalir
 
+## 🔧 Teknologi
+
+--
+
 ## 🏗️ Struktur Proyek
 
 ```
-Kapal-Phinisi/
-├── index.html          # File HTML utama (scene, kamera, lighting)
-├── main.css            # Styling CSS
-├── package.json        # Konfigurasi npm dan dependencies
-├── package-lock.json   # Lock file untuk dependencies
-├── node_modules/       # Folder dependencies (Three.js, etc)
-└── README.md           # File dokumentasi ini
+three/
+├── build/              # Build hasil kompilasi (file three.*.js)
+├── examples/           # Contoh scene dan resource
+├── src/                # Modul sumber dan implementasi
+├── index.html          # File HTML utama (entry)
+├── main.css            # Styling / CSS
+├── package.json        # Konfigurasi npm dan skrip
+├── README.md           # Berkas dokumentasi ini
+└── LICENSE             # Lisensi proyek
 ```
-
-## 🔧 Teknologi
 
 - **Three.js** (v0.182.0) - Library WebGL untuk rendering 3D
 - **OrbitControls** - Mouse controls untuk navigasi camera
