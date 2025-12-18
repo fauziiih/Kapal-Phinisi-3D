@@ -179,7 +179,13 @@ Aplikasi memiliki **mode simulasi mini** untuk menggerakkan kapal:
 - Air terus beranimasi dengan gelombang yang mengalir
 
 ## 🔧 Teknologi
-
+- **Three.js** (v0.182.0) - Library WebGL untuk rendering 3D
+- **OrbitControls** - Mouse controls untuk navigasi camera
+- **Water Shader** - Efek air dengan normal mapping
+- **Sky Shader** - Realistic sky rendering
+- **Stats.js** - Monitor performance (FPS, memory)
+- **lil-gui** - GUI panel untuk kontrol parameter
+- **http-server** - Simple development server
 --
 
 ## 🏗️ Struktur Proyek
@@ -195,14 +201,6 @@ three/
 ├── README.md           # Berkas dokumentasi ini
 └── LICENSE             # Lisensi proyek
 ```
-
-- **Three.js** (v0.182.0) - Library WebGL untuk rendering 3D
-- **OrbitControls** - Mouse controls untuk navigasi camera
-- **Water Shader** - Efek air dengan normal mapping
-- **Sky Shader** - Realistic sky rendering
-- **Stats.js** - Monitor performance (FPS, memory)
-- **lil-gui** - GUI panel untuk kontrol parameter
-- **http-server** - Simple development server
 
 ## 💡 Tips Penggunaan
 
