@@ -60,6 +60,29 @@
       🎮
     </button>
 
+    <button
+      id="dayNightToggle"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 160px;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 12px 16px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      "
+      onmouseover="this.style.background='rgba(0, 0, 0, 0.9)'"
+      onmouseout="this.style.background='rgba(0, 0, 0, 0.7)'"
+    >
+      🌙
+    </button>
+
     <!-- Popup Modal -->
 
     <div
@@ -431,82 +454,79 @@
 
         //kapal-phinisi
         const loader = new GLTFLoader();
-        loader.load(
-          "examples/models/gltf/phinisi.glb",
-          function (gltf) {
-            mesh = gltf.scene;
-            mesh.scale.set(6, 6, 6);
-            scene.add(mesh);
+        loader.load("examples/models/gltf/phinisi.glb", function (gltf) {
+          mesh = gltf.scene;
+          mesh.scale.set(6, 6, 6);
+          scene.add(mesh);
 
-            // ========================================
-            // PENGATURAN ARAH KAPAL (UBAH DI SINI!)
-            // ========================================
-            // Ubah nilai di bawah untuk memutar kapal:
-            // 0 = arah default (menghadap +Z)
-            // Math.PI / 2 = putar 90° ke kanan
-            // Math.PI = putar 180° (balik arah)
-            // -Math.PI / 2 = putar 90° ke kiri
-            // Math.PI * 1.5 = putar 270°
+          // ========================================
+          // PENGATURAN ARAH KAPAL (UBAH DI SINI!)
+          // ========================================
+          // Ubah nilai di bawah untuk memutar kapal:
+          // 0 = arah default (menghadap +Z)
+          // Math.PI / 2 = putar 90° ke kanan
+          // Math.PI = putar 180° (balik arah)
+          // -Math.PI / 2 = putar 90° ke kiri
+          // Math.PI * 1.5 = putar 270°
 
-            mesh.rotation.y = 0; // ← UBAH NILAI INI UNTUK MENGATUR ARAH KAPAL
+          mesh.rotation.y = 0; // ← UBAH NILAI INI UNTUK MENGATUR ARAH KAPAL
 
-            // ========================================
+          // ========================================
 
-            // Create interactive markers for ship parts
-            const markerGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+          // Create interactive markers for ship parts
+          const markerGeometry = new THREE.SphereGeometry(0.25, 16, 16);
 
-            // Marker 1: Layar (Sail) - positioned high
-            const layarMaterial = new THREE.MeshBasicMaterial({
-              color: 0x00ff00,
-              transparent: true,
-              opacity: 0.8,
-            });
-            const layarMarker = new THREE.Mesh(markerGeometry, layarMaterial);
-            layarMarker.position.set(0, 7, 0); // At sail/mast area (center top)
-            layarMarker.userData = {
-              type: "layar",
-              title: "Layar Kapal Phinisi",
-              description:
-                "Layar perahu Phinisi adalah layar tradisional khas Sulawesi Selatan yang berfungsi sebagai penggerak utama kapal. Phinisi memiliki dua tiang utama dengan tujuh layar yang tersusun khas, melambangkan keseimbangan dan filosofi kehidupan pelaut Bugis–Makassar. Layar ini biasanya terbuat dari kain tebal dan dirancang untuk memanfaatkan arah angin secara optimal saat berlayar di laut lepas.",
-            };
-            mesh.add(layarMarker);
+          // Marker 1: Layar (Sail) - positioned high
+          const layarMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff00,
+            transparent: true,
+            opacity: 0.8,
+          });
+          const layarMarker = new THREE.Mesh(markerGeometry, layarMaterial);
+          layarMarker.position.set(0, 7, 0); // At sail/mast area (center top)
+          layarMarker.userData = {
+            type: "layar",
+            title: "Layar Kapal Phinisi",
+            description:
+              "Layar perahu Phinisi adalah layar tradisional khas Sulawesi Selatan yang berfungsi sebagai penggerak utama kapal. Phinisi memiliki dua tiang utama dengan tujuh layar yang tersusun khas, melambangkan keseimbangan dan filosofi kehidupan pelaut Bugis–Makassar. Layar ini biasanya terbuat dari kain tebal dan dirancang untuk memanfaatkan arah angin secara optimal saat berlayar di laut lepas.",
+          };
+          mesh.add(layarMarker);
 
-            // Marker 2: Body Kapal - positioned middle
-            const bodyMaterial = new THREE.MeshBasicMaterial({
-              color: 0x0088ff,
-              transparent: true,
-              opacity: 0.8,
-            });
-            const bodyMarker = new THREE.Mesh(markerGeometry, bodyMaterial);
-            bodyMarker.position.set(1.5, 1, 0); // At ship body (middle side)
-            bodyMarker.userData = {
-              type: "body",
-              title: "Body Kapal Phinisi",
-              description:
-                "Body kapal Phinisi adalah bagian badan kapal yang memanjang dan kokoh, berfungsi menopang seluruh struktur serta menjaga kestabilan kapal saat berlayar. Terbuat dari kayu bitti berwarna putih/krem",
-            };
-            mesh.add(bodyMarker);
+          // Marker 2: Body Kapal - positioned middle
+          const bodyMaterial = new THREE.MeshBasicMaterial({
+            color: 0x0088ff,
+            transparent: true,
+            opacity: 0.8,
+          });
+          const bodyMarker = new THREE.Mesh(markerGeometry, bodyMaterial);
+          bodyMarker.position.set(1.5, 1, 0); // At ship body (middle side)
+          bodyMarker.userData = {
+            type: "body",
+            title: "Body Kapal Phinisi",
+            description:
+              "Body kapal Phinisi adalah bagian badan kapal yang memanjang dan kokoh, berfungsi menopang seluruh struktur serta menjaga kestabilan kapal saat berlayar. Terbuat dari kayu bitti berwarna putih/krem",
+          };
+          mesh.add(bodyMarker);
 
-            // Marker 3: Bulukumba (Stern) - positioned at back
-            const sternMaterial = new THREE.MeshBasicMaterial({
-              color: 0xff8800,
-              transparent: true,
-              opacity: 0.8,
-            });
-            const sternMarker = new THREE.Mesh(markerGeometry, sternMaterial);
-            sternMarker.position.set(6, 1.5, 0.5); // At stern/back of ship
-            sternMarker.userData = {
-              type: "bulukumba",
-              title: "Bulukumba - Kampung Halaman Phinisi",
-              description:
-                "Bulukumba adalah pusat pembuatan kapal Phinisi yang paling terkenal. Banyak kapal Phinisi besar dan tradisional dibuat di sini menggunakan teknik kuno, tradisi ritual, serta keterampilan turun-temurun masyarakat setempat.",
-            };
-            mesh.add(sternMarker);
+          // Marker 3: Bulukumba (Stern) - positioned at back
+          const sternMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff8800,
+            transparent: true,
+            opacity: 0.8,
+          });
+          const sternMarker = new THREE.Mesh(markerGeometry, sternMaterial);
+          sternMarker.position.set(6, 1.5, 0.5); // At stern/back of ship
+          sternMarker.userData = {
+            type: "bulukumba",
+            title: "Bulukumba - Kampung Halaman Phinisi",
+            description:
+              "Bulukumba adalah pusat pembuatan kapal Phinisi yang paling terkenal. Banyak kapal Phinisi besar dan tradisional dibuat di sini menggunakan teknik kuno, tradisi ritual, serta keterampilan turun-temurun masyarakat setempat.",
+          };
+          mesh.add(sternMarker);
 
-            // Store markers for animation
-            window.shipMarkers = [layarMarker, bodyMarker, sternMarker];
-          }
-        );
+          // Store markers for animation
+          window.shipMarkers = [layarMarker, bodyMarker, sternMarker];
+        });
 
         //
 
@@ -652,13 +672,39 @@
         const gui = new GUI();
 
         const folderSky = gui.addFolder("Sky");
-        folderSky
+        const elevationController = folderSky
           .add(parameters, "elevation", -10, 90, 0.1)
           .onChange(updateSun);
         folderSky
           .add(parameters, "azimuth", -180, 180, 0.1)
           .onChange(updateSun);
         folderSky.open();
+
+        // Day/Night Toggle Logic
+        // Determine initial state based on current elevation
+        // elevation > 0 is Day, so potential "Night" is the next action (icon: Moon)
+        // elevation <= 0 is Night, so potential "Day" is the next action (icon: Sun)
+        let isDay = parameters.elevation > 0;
+        const toggleButton = document.getElementById("dayNightToggle");
+
+        // Set initial icon
+        toggleButton.textContent = isDay ? "🌙" : "☀️";
+
+        toggleButton.addEventListener("click", () => {
+          if (isDay) {
+            // Switch to Night
+            parameters.elevation = -2;
+            toggleButton.textContent = "☀️"; // Show Sun icon to switch back to Day
+            isDay = false;
+          } else {
+            // Switch to Day
+            parameters.elevation = 12;
+            toggleButton.textContent = "🌙"; // Show Moon icon to switch back to Night
+            isDay = true;
+          }
+          elevationController.updateDisplay();
+          updateSun();
+        });
 
         const waterUniforms = water.material.uniforms;
 
@@ -668,6 +714,9 @@
           .name("distortionScale");
         folderWater.add(waterUniforms.size, "value", 0.1, 10, 0.1).name("size");
         folderWater.open();
+
+        // Minimize GUI on load
+        gui.close();
 
         //
 
