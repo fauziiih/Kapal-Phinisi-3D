@@ -244,11 +244,11 @@
         const audioButton = document.getElementById("audioButton");
 
         audioLoader.load(
-          "examples/sounds/videoplayback.m4a",
+          "examples/sounds/backsound.MP3",
           function (buffer) {
             sound.setBuffer(buffer);
             sound.setLoop(true);
-            sound.setVolume(5);
+            sound.setVolume(3);
 
             // Audio button click handler
             audioButton.addEventListener("click", function () {
